@@ -75,8 +75,7 @@ function Limitador(opcoes) {
         // Nosso mediador retornou um erro. Isso significa que a operações não
         // deve ser autorizada.
         if (opcoes.max && atual > opcoes.max) {
-          requisicao.status(opcoes.codigoDeEstatos).send({message: opcoes.mensagem});
-          deliberar(contexto.parar);
+          deliberar(contexto.error(opcoes.codigoDeEstatos, opcoes.mensagem));
         }
 
         deliberar(contexto.continuar);
