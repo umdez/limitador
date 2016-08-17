@@ -21,7 +21,8 @@
     "forcaBruta"
   ],
   "dependencies": {
-    "defaults": "^1.0.3"
+    "defaults": "^1.0.3",
+    "bluebird": "3.0.0"
   },
   "devDependencies": {
 

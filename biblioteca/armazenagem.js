@@ -5,15 +5,15 @@
  *                 https://github.com/devowly                      *
  *******************************************************************
  * 
- * $Id armazem.js, criado em 16/08/2016 às 17:02 por Leo Felippe $
+ * $Id armazenagem.js, criado em 16/08/2016 às 17:02 por Leo Felippe $
  *
  * Versão atual 0.0.1-Beta
  */
 
-function Armazem(windowMs) {
+function Armazenagem(intervalo) {
   var visitas = {};
 
-  this.incr = function(chave, cd) {
+  this.incrementar = function(chave, cd) {
     if (visitas[chave]) {
       visitas[chave]++;
     } else {
@@ -23,17 +23,17 @@ function Armazem(windowMs) {
     cd(null, visitas[chave]);
   };
 
-  this.resetAll = function() {
+  this.reiniciarTodos = function() {
     visitas = {};
   };
 
   // Utilizamos isso para permitir que seja resetado todos os IPs de um ou de todos
-  this.resetKey = function(chave) {
+  this.reiniciarChave = function(chave) {
     delete visitas[chave];
   };
 
-  // Simplesmente resetar todas as visitas a cada windowMs
-  setInterval(this.resetAll, windowMs);
+  // Simplesmente resetar todas as visitas a cada intervalo
+  setInterval(this.reiniciarTodos, intervalo);
 }
 
-module.exports = Armazem;
+module.exports = Armazenagem;

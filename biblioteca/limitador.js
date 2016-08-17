@@ -1,87 +1,92 @@
 'use strict';
+
+/*******************************************************************
+ * Limitador é de (C) propriedade da Devowly Sistemas 2015-2016    *
+ *                 https://github.com/devowly                      *
+ *******************************************************************
+ * 
+ * $Id limitador.js, criado em 17/08/2016 às 12:20 por Leo Felippe $
+ *
+ * Versão atual 0.0.1-Beta
+ */
+
 var defaults = require('defaults');
-var Armazem = require('./armazem');
+var Promessa = require('bluebird');
+var Armazenagem = require('./armazenagem');
 
-function Limitador(options) {
+/* Iniciamos aqui o serviço de funilamento. Assim iremos proteger nossos
+ * estágios finais contra o uso abusivo.
+ *
+ *  - opcoes.intervalo (Opcional) Tempo em milisegundos que informa quanto tempo
+ *  manteremos o registro de requisições na memoria.
+ * 
+ *  - opcoes.max (Opcional) Máximo número de requisições aceitas em um intervalo
+ *  definido até enviarmos a resposta 429.
+ * 
+ *  - opcoes.mensagem (Opcional) A mensagem de resposta.
+ * 
+ *  - opcoes.cabecalhos (Opcional) Cabeçalhos customizados a serem enviados
+ *  sempre que o limite for extrapolado.
+ * 
+ *  - opcoes.codigoDeEstatos (Opcional) Código de estatos (429) para muitas
+ *  requisicoes.
+ */
+function Limitador(opcoes) {
 
-    options = defaults(options, {
-        // window, delay, and max apply per-key unless global is set to true
-        windowMs: 60 * 1000, // milliseconds - how long to keep records of requests in memory
-        delayAfter: 1, // how many requests to allow through before starting to delay responses
-        delayMs: 1000, // milliseconds - base delay applied to the response - multiplied by number of recent hits for the same key.
-        max: 5, // max number of recent connections during `window` milliseconds before sending a 429 response
-        message : 'Too many requests, please try again later.',
-        statusCode: 429, // 429 status = Too Many Requests (RFC 6585)
-        headers: true, //Send custom rate limit header with limit and remaining
-        // allows to create custom keys (by default user IP is used)
-        keyGenerator: function (req /*, res*/) {
-            return req.ip;
-        },
-        handler: function (req, res /*, next*/) {
-          res.format({
-            html: function(){
-              res.status(options.statusCode).end(options.message);
-            },
-            json: function(){
-              res.status(options.statusCode).json({ message: options.message });
-            }
-          });
+  opcoes = defaults(opcoes, {
+    intervalo: 60 * 1000, 
+    max: 5, 
+    mensagem : 'Muitas requisições. Tente novamente depois.',
+    codigoDeEstatos: 429, 
+    cabecalhos: true, 
+    geradorDeChave: function (requisicao) {
+      return requisicao.ip;
+    }
+  });
+
+  // Armazem a ser utilizado para manter a taxa limite de dados.
+  opcoes.armazem = opcoes.armazem || new Armazenagem(opcoes.intervalo);
+
+  // Assegura que a armazenagem escolhida possui o método incrementar.
+  if (typeof opcoes.armazem.incrementar !== 'function' || typeof opcoes.armazem.reiniciarChave !== 'function') {
+    throw new Error('A armazenagem provida é inválida.');
+  }
+
+  function limitarTaxa(requisicao, resposta, contexto) {
+    var chave = opcoes.geradorDeChave(requisicao);
+
+    return new Promessa(function(deliberar, recusar) {
+      opcoes.armazem.incrementar(chave, function(erro, atual) {
+       
+        if (erro) {
+          recusar(erro)
         }
+
+        requisicao.limitarTaxa = {
+          limite: opcoes.max,
+          restante: Math.max(opcoes.max - atual, 0)
+        };
+
+        if (opcoes.cabecalhos) {
+          resposta.setHeader('X-Limitador-Limite', opcoes.max);
+          resposta.setHeader('X-Limitador-Restante', requisicao.limitarTaxa.restante);
+        }
+
+        // Nosso mediador retornou um erro. Isso significa que a operações não
+        // deve ser autorizada.
+        if (opcoes.max && atual > opcoes.max) {
+          requisicao.status(opcoes.codigoDeEstatos).send({message: opcoes.mensagem});
+          deliberar(contexto.parar);
+        }
+
+        deliberar(contexto.continuar);
+      });
     });
+  };
 
-    // store to use for persisting rate limit data
-    options.store = options.store || new Armazem(options.windowMs);
+  limitarTaxa.reiniciarChave = opcoes.armazem.reiniciarChave.bind(opcoes.armazem);
 
-
-    // ensure that the store has the incr method
-    if (typeof options.store.incr !== 'function' || typeof options.store.resetKey !== 'function') {
-        throw new Error('The store is not valid.');
-    }
-
-
-    if (options.global) {
-        throw new Error('The global option was removed from express-rate-limit v2.');
-    }
-
-
-    function rateLimit(req, res, next) {
-        var key = options.keyGenerator(req, res);
-
-        options.store.incr(key, function(err, current) {
-            if (err) {
-              return next(err);
-            }
-
-            req.rateLimit = {
-              limit: options.max,
-              remaining: Math.max(options.max - current, 0)
-            };
-            
-            if (options.headers) {
-              res.setHeader('X-RateLimit-Limit', options.max);
-              res.setHeader('X-RateLimit-Remaining', req.rateLimit.remaining);
-            }
-
-            if (options.max && current > options.max) {
-              return options.handler(req, res, next);
-            }
-
-            if (options.delayAfter && options.delayMs && current > options.delayAfter) {
-              var delay = (current - options.delayAfter) * options.delayMs;
-              return setTimeout(next, delay);
-            }
-
-            next();
-
-        });
-    }
-
-    rateLimit.resetKey = options.store.resetKey.bind(options.store);
-
-    // Backward compatibility function
-    rateLimit.resetIp = rateLimit.resetKey;
-
-    return rateLimit;
+  return limitarTaxa;
 }
 
 module.exports = Limitador;
