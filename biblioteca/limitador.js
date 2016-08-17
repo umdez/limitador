@@ -36,7 +36,7 @@ function Limitador(opcoes) {
   opcoes = defaults(opcoes, {
     intervalo: 60 * 1000, 
     max: 5, 
-    mensagem : 'Muitas requisições. Tente novamente depois.',
+    mensagem : 'Muitas requisições. Tente novamente mais tarde.',
     codigoDeEstatos: 429, 
     cabecalhos: true, 
     geradorDeChave: function (requisicao) {
