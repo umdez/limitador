@@ -52,7 +52,7 @@ function Limitador(opcoes) {
     throw new Error('A armazenagem provida é inválida.');
   }
 
-  function limitarTaxa(requisicao, resposta, contexto) {
+  function limitarTaxaRestificando(requisicao, resposta, contexto) {
     var chave = opcoes.geradorDeChave(requisicao);
 
     return new Promessa(function(deliberar, recusar) {
@@ -83,9 +83,16 @@ function Limitador(opcoes) {
     });
   };
 
+  function limitarTaxaExpress(requisicao, resposta, proximo) {
+    
+  };
+
   limitarTaxa.reiniciarChave = opcoes.armazem.reiniciarChave.bind(opcoes.armazem);
 
-  return limitarTaxa;
+  return {
+    'Restificando': limitarTaxaRestificando
+  , 'Express': limitarTaxaExpress
+  }
 }
 
 module.exports = Limitador;
