@@ -24,7 +24,7 @@ var limiteDeLeituras = new limitadorDeUso({
 
 fonte.ler.iniciar.antesQue(function(requisicao, resposta, contexto) {
   // Protege nossa rota de leitura.
-  return limiteDeLeituras(requisicao, resposta, contexto);
+  return limiteDeLeituras.Restificando(requisicao, resposta, contexto);
 });
 
 fonte.ler.iniciar(function(requisicao, resposta, contexto) {
@@ -32,6 +32,21 @@ fonte.ler.iniciar(function(requisicao, resposta, contexto) {
 });
 
 ``` 
+A partir da segunda versão, é possível também limitar o acesso às rotas do Express. Um exemplo abaixo:
+
+```javascript
+var aplic = require('express');
+var limitadorDeUso = require('limitador');
+
+var limiteDeAcessos = new limitadorDeUso({
+  intervalo: 15*60*1000, // 15 minutos.
+  max: 2 // Apenas 2 requisições a cada intervalo.
+});
+
+// Apenas aplica limite naquelas rotas que iniciam em '/umaRotaQualquer/'
+aplic.use('/umaRotaQualquer/', limiteDeAcessos.Express);
+```
+
 ## Créditos
 - Todos os contribuidores do projeto [express-rate-limit](https://github.com/nfriedly/express-rate-limit), pois ele foi uma fonte de inspiração.
 - Todos os contribuidores da [Devowly](https://github.com/devowly).
