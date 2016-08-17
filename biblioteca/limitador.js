@@ -58,9 +58,9 @@ function Limitador(opcoes) {
     return new Promessa(function(deliberar, recusar) {
       opcoes.armazem.incrementar(chave, function(erro, atual) {
        
-        if (erro) {
-          recusar(erro)
-        }
+        //if (erro) {
+        //  recusar(erro);
+        //}
 
         requisicao.limitarTaxa = {
           limite: opcoes.max,
@@ -75,7 +75,7 @@ function Limitador(opcoes) {
         // Nosso mediador retornou um erro. Isso significa que a operações não
         // deve ser autorizada.
         if (opcoes.max && atual > opcoes.max) {
-          deliberar(contexto.error(opcoes.codigoDeEstatos, opcoes.mensagem));
+          deliberar(contexto.erro(opcoes.codigoDeEstatos, opcoes.mensagem));
         }
 
         deliberar(contexto.continuar);
