@@ -1,0 +1,35 @@
+{
+  "name": "limitador",
+  "version": "0.0.1-beta",
+  "description": "Um limitador de taxa de uso por IP para ser utilizado como mediador para o Express. Utilizado para limitar as requisições repetidas para rotas públicas ou estágios finais.",
+  "homepage": "https://github.com/umdez/limitador",
+  "author": "Léo Felippe <leofelippedias@hotmail.com.br>",
+  "main": "./iniciar.js",
+  "repository": "umdez/limitador",
+  "keywords": [
+    "limitador",
+    "express",
+    "taxa",
+    "limite",
+    "afunilar",
+    "mediador",
+    "ip",
+    "visitas",
+    "autorizacao",
+    "seguranca",
+    "ataques",
+    "forcaBruta"
+  ],
+  "dependencies": {
+    "defaults": "^1.0.3"
+  },
+  "devDependencies": {
+
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=0.4.0"
+  },
+  "bin": "./iniciar.js"
+}
