@@ -84,7 +84,38 @@ function Limitador(opcoes) {
   };
 
   function limitarTaxaExpress(requisicao, resposta, proximo) {
-    
+    var chave = opcoes.geradorDeChave(requisicao);
+    opcoes.armazem.incrementar(chave, function(erro, atual) {
+      
+      if (erro) {
+        return proximo(erro);
+      }
+
+      requisicao.limitarTaxa = {
+        limite: opcoes.max,
+        restante: Math.max(opcoes.max - atual, 0)
+      };
+
+      if (opcoes.cabecalhos) {
+        resposta.setHeader('X-Limitador-Limite', opcoes.max);
+        resposta.setHeader('X-Limitador-Restante', requisicao.limitarTaxa.restante);
+      }
+
+      // Nosso mediador retornou um erro. Isso significa que a operações não
+      // deve ser autorizada.
+      if (opcoes.max && atual > opcoes.max) {
+        resposta.format({
+          html: function(){
+            resposta.status(opcoes.codigoDeEstatos).end(opcoes.mensagem);
+          },
+          json: function(){
+            resposta.status(opcoes.codigoDeEstatos).json({ message: opcoes.mensagem });
+          }
+        });
+      }
+
+      proximo();
+    });
   };
 
   limitarTaxaRestificando.reiniciarChave = opcoes.armazem.reiniciarChave.bind(opcoes.armazem);
