@@ -87,7 +87,8 @@ function Limitador(opcoes) {
     
   };
 
-  limitarTaxa.reiniciarChave = opcoes.armazem.reiniciarChave.bind(opcoes.armazem);
+  limitarTaxaRestificando.reiniciarChave = opcoes.armazem.reiniciarChave.bind(opcoes.armazem);
+  limitarTaxaExpress.reiniciarChave = opcoes.armazem.reiniciarChave.bind(opcoes.armazem);
 
   return {
     'Restificando': limitarTaxaRestificando
